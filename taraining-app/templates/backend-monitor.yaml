@@ -1,0 +1,18 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Values.backend.name }}-monitor
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "taraining-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.backend.name }}
+  endpoints:
+  - port: http
+    path: {{ .Values.backend.metricsPath | default "/metrics" }}
+    interval: {{ .Values.monitoring.interval | default "30s" }}
+    scrapeTimeout: {{ .Values.monitoring.timeout | default "10s" }}
+{{- end }}

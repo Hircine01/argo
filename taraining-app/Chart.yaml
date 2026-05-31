@@ -1,0 +1,7 @@
+apiVersion: v2
+name: taraining-app
+description: Training-app
+type: application
+version: 0.1.0
+appVersion: "1.1.0"
+kubeVersion: ">= 1.30.0"

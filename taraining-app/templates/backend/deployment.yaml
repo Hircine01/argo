@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "taraining-app.fullname" . }}-{{ .Values.backend.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "taraining-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  revisionHistoryLimit: {{ .Values.backend.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "taraining-app.selectorLabels" . | nindent 6 }}
+      app: {{ .Values.backend.name }}
+  template:
+    metadata:
+      {{- with .Values.backend.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "taraining-app.selectorLabels" . | nindent 8 }}
+        app: {{ .Values.backend.name }}
+    spec:
+      containers:
+      - name: {{ .Values.backend.name }}
+        image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default "latest" }}
+        imagePullPolicy: {{ .Values.backend.image.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backend.containerPort }}
+          name: http
+
+        {{- with .Values.backend.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- with .Values.backend.probes }}
+        {{- toYaml . | nindent 8}}
+        {{- end }}
+

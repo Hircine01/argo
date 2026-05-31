@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "taraining-app.fullname" . }}-{{ .Values.nginx.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "taraining-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.nginx.replicas }}
+  revisionHistoryLimit: {{ .Values.nginx.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "taraining-app.selectorLabels" . | nindent 6 }}
+      app: {{ .Values.nginx.name }}
+  template:
+    metadata:
+      {{- with .Values.nginx.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "taraining-app.selectorLabels" . | nindent 8 }}
+        app: {{ .Values.nginx.name }}
+    spec:
+      containers:
+      - name: {{ .Values.nginx.name }}
+        image: {{ .Values.nginx.image.repository}}:{{ .Values.nginx.image.tag | default "latest" }}
+        imagePullPolicy: {{ .Values.nginx.image.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.nginx.containerPort }}
+          name: http
+        {{- with .Values.nginx.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- with .Values.nginx.probes }}
+        {{- toYaml . | nindent 8}}
+        {{- end }}
+
+      - name: nginx-exporter
+        image: {{ .Values.nginx.exporter.image | default "nginx/nginx-prometheus-exporter:1.1.0" }}
+        imagePullPolicy: {{ .Values.nginx.exporter.imagePullPolicy | default "IfNotPresent" }}
+        args:
+        - -nginx.scrape-uri={{ .Values.nginx.exporter.scrapeUri | default "http://localhost/nginx_status" }}
+        - -web.listen-address=:9114
+        ports:
+        - name: metrics
+          containerPort: {{ .Values.nginx.exporter.port | default 9114 }}
+        resources:
+          {{- toYaml .Values.nginx.exporter.resources | nindent 10 }}

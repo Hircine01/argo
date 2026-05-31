@@ -1,0 +1,80 @@
+fullnameOverride: "app"
+nameOverride: ""
+global:
+  namespace: training-app
+
+backend:
+  name: backend
+  replicas: 2 
+  revisionHistoryLimit: 3
+  podAnnotations: {}
+  image:
+    repository: hircine01/training-app-backend
+    tag: 172
+    imagePullPolicy: IfNotPresent
+  containerPort: 5000
+  resources: {}
+  probes:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /
+        port: http
+
+monitoring:
+  enabled: true
+  interval: 30s
+  timeout: 10s
+
+nginx:
+  fqdn: "training-app.local"
+  name: nginx
+  replicas: 1
+  revisionHistoryLimit: 3
+  podAnnotations: {}
+  image:
+    repository: hircine01/training-app-nginx
+    tag: 172
+    imagePullPolicy: IfNotPresent
+  containerPort: 80
+  resources: {}
+  probes:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /
+        port: http
+  exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    imagePullPolicy: IfNotPresent
+    port: 9114
+    scrapeUri: http://localhost/nginx_status
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "10m"
+      limits:
+        memory: "64Mi"
+        cpu: "50m"
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: training-app.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
